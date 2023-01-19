@@ -30,7 +30,7 @@ steps:
       [
         "beta", "deploy", "releases", "create", "rel-${SHORT_SHA}",
         "--delivery-pipeline", "hello-world-python-pipeline",
-        "--region", "us-central1",
+        "--region", "asia-east1",
         "--annotations", "commitId=${REVISION_ID}",
         "--images", "hello-world-python=us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python:${COMMIT_SHA}"
       ]
