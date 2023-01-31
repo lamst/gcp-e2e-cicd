@@ -23,6 +23,32 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python:${COMMIT_SHA}']
     id: push
+  # Check vulnerabilities
+  - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
+    id: vulnz-scan
+    entrypoint: 'sh'
+    args:
+    - -xe
+    - -c
+    - |
+        /scripts/check_vulnerabilities.sh -p $PROJECT_ID -i us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python:${COMMIT_SHA} -t 7
+  # Create attestation
+  - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
+    id: 'attest-vulnz-scan'
+    entrypoint: 'sh'
+    args:
+    - -xe
+    - -c
+    - |-
+        FQ_DIGEST=$(gcloud container images describe --format 'value(image_summary.fully_qualified_digest)' us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python:$COMMIT_SHA)
+        /scripts/create_attestation.sh \
+          -p "$PROJECT_ID" \
+          -i "$${FQ_DIGEST}" \
+          -a "$_VULNZ_ATTESTOR" \
+          -v "$_VULNZ_KMS_KEY_VERSION" \
+          -k "$_VULNZ_KMS_KEY" \
+          -l "$_KMS_LOCATION" \
+          -r "$_KMS_KEYRING"
   # Create release in Google Cloud Deploy
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
