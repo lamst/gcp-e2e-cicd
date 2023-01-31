@@ -58,7 +58,7 @@ steps:
     - '-c'
     - |-
       DIGEST=$(gcloud container images describe --format 'value(image_summary.digest)' us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python:$COMMIT_SHA)
-      gcloud deploy releases creae rel-${SHORT_SHA} \
+      gcloud deploy releases create rel-${SHORT_SHA} \
         --delivery-pipeline "hello-world-python-pipeline" \
         --region "asia-east1" \
         --annotations "commitId=${REVISION_ID}" \
