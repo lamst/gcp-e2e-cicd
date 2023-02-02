@@ -12,6 +12,23 @@ steps:
     args: ["-m","pytest","unit_tests.py"]
     dir: 'app'
     id: test
+  # Create test attestation
+  - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
+    id: 'attest-vulnz-scan'
+    entrypoint: 'sh'
+    args:
+    - -xe
+    - -c
+    - |-
+        FQ_DIGEST=$(gcloud container images describe --format 'value(image_summary.fully_qualified_digest)' ${_IMAGE_PATH}:$COMMIT_SHA)
+        /scripts/create_attestation.sh \
+          -p "$PROJECT_ID" \
+          -i "$${FQ_DIGEST}" \
+          -a "$_TEST_ATTESTOR" \
+          -v "$_TEST_KMS_KEY_VERSION" \
+          -k "$_TEST_KMS_KEY" \
+          -l "$_KMS_LOCATION" \
+          -r "$_KMS_KEYRING"
   # Verify code with sonarqube - Quality gate
   - name: 'gcr.io/$PROJECT_ID/sonar-scanner:latest'
     entrypoint: 'bash'
@@ -19,7 +36,7 @@ steps:
     - -c
     - /launch.sh -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$$SONAR_TOKEN -Dsonar.projectKey=$$SONAR_PROJECT_KEY -Dsonar.organization=$$SONAR_ORG -Dsonar.sources=./app -Dsonar.qualitygate.wait=false
     secretEnv: ['SONAR_TOKEN','SONAR_ORG','SONAR_PROJECT_KEY']
-    id: static-code-analysis    
+    id: static-code-analysis
   # Push docker image and save image digest for kritis check
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '${_IMAGE_PATH}:${COMMIT_SHA}']
@@ -33,7 +50,7 @@ steps:
     - -c
     - |
         /scripts/check_vulnerabilities.sh -p ${PROJECT_ID} -i ${_IMAGE_PATH}:${COMMIT_SHA} -t 7
-  # Create attestation
+  # Create vulnerability attestation
   - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
     id: 'attest-vulnz-scan'
     entrypoint: 'sh'
