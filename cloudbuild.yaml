@@ -12,6 +12,18 @@ steps:
     args: ["-m","pytest","unit_tests.py"]
     dir: 'app'
     id: test
+  # Verify code with sonarqube - Quality gate
+  - name: 'gcr.io/$PROJECT_ID/sonar-scanner:latest'
+    entrypoint: 'bash'
+    args:
+    - -c
+    - /launch.sh -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$$SONAR_TOKEN -Dsonar.projectKey=$$SONAR_PROJECT_KEY -Dsonar.organization=$$SONAR_ORG -Dsonar.sources=./app -Dsonar.qualitygate.wait=false
+    secretEnv: ['SONAR_TOKEN','SONAR_ORG','SONAR_PROJECT_KEY']
+    id: static-code-analysis
+  # Push docker image and save image digest for kritis check
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '${_IMAGE_PATH}:${COMMIT_SHA}']
+    id: push
   # Create test attestation
   - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
     id: 'attest-unit-test'
@@ -29,18 +41,6 @@ steps:
           -k "$_TEST_KMS_KEY" \
           -l "$_KMS_LOCATION" \
           -r "$_KMS_KEYRING"
-  # Verify code with sonarqube - Quality gate
-  - name: 'gcr.io/$PROJECT_ID/sonar-scanner:latest'
-    entrypoint: 'bash'
-    args:
-    - -c
-    - /launch.sh -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$$SONAR_TOKEN -Dsonar.projectKey=$$SONAR_PROJECT_KEY -Dsonar.organization=$$SONAR_ORG -Dsonar.sources=./app -Dsonar.qualitygate.wait=false
-    secretEnv: ['SONAR_TOKEN','SONAR_ORG','SONAR_PROJECT_KEY']
-    id: static-code-analysis
-  # Push docker image and save image digest for kritis check
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_IMAGE_PATH}:${COMMIT_SHA}']
-    id: push
   # Check vulnerabilities
   - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
     id: vulnz-scan
