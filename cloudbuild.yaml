@@ -66,7 +66,7 @@ steps:
 images:
   - $_IMAGE_PATH:$COMMIT_SHA
 substitutions:
-  _IMAGE_PATH: us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python 
+  _IMAGE_PATH: 'us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python'
 availableSecrets:
   secretManager:
   - versionName: projects/$PROJECT_ID/secrets/SONAR_TOKEN/versions/latest
