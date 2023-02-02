@@ -7,7 +7,7 @@ steps:
     dir: 'app'  
     id: build
   # Run unit tests
-  - name: $_IMAGE_PATH
+  - name: us-central1-docker.pkg.dev/$PROJECT_ID/hello-world-python/hello-world-python
     entrypoint: python
     args: ["-m","pytest","unit_tests.py"]
     dir: 'app'
