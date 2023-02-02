@@ -14,7 +14,7 @@ steps:
     id: test
   # Create test attestation
   - name: 'us-central1-docker.pkg.dev/$PROJECT_ID/cloudbuild-helpers/attestor'
-    id: 'attest-vulnz-scan'
+    id: 'attest-unit-test'
     entrypoint: 'sh'
     args:
     - -xe
